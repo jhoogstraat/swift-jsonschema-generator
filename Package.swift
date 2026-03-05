@@ -6,6 +6,10 @@ let package = Package(
     name: "swift-jsonschema-generator",
     platforms: [.macOS(.v15)],
     products: [
+        .library(
+            name: "JSONSchemaToSwiftGeneratorCore",
+            targets: ["JSONSchemaToSwiftGeneratorCore"]
+        ),
         .executable(
             name: "swift-jsonschema-generator",
             targets: ["JSONSchemaToSwiftGenerator"]
@@ -16,8 +20,16 @@ let package = Package(
         ),
     ],
     targets: [
+        .target(
+            name: "JSONSchemaToSwiftGeneratorCore"
+        ),
         .executableTarget(
-            name: "JSONSchemaToSwiftGenerator"
+            name: "JSONSchemaToSwiftGenerator",
+            dependencies: ["JSONSchemaToSwiftGeneratorCore"]
+        ),
+        .testTarget(
+            name: "JSONSchemaToSwiftGeneratorCoreTests",
+            dependencies: ["JSONSchemaToSwiftGeneratorCore"]
         ),
         .plugin(
             name: "JSONSchemaToSwiftPlugin",

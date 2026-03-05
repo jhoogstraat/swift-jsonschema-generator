@@ -4,6 +4,7 @@
 
 It exposes:
 
+- a reusable library target: `JSONSchemaToSwiftGeneratorCore`
 - an executable: `swift-jsonschema-generator`
 - a SwiftPM build tool plugin: `JSONSchemaToSwiftPlugin`
 
@@ -26,3 +27,6 @@ Example configuration:
 
 The `schema` path is resolved relative to the target directory. Generated Swift is emitted into the
 plugin work directory and compiled as part of the target.
+
+The generator emits a concrete root `struct` for object schemas with properties, and a `typealias`
+root when the schema root is a `$ref`, array, primitive, or map-like object.
