@@ -33,7 +33,7 @@ struct JSONSchemaToSwiftPlugin: BuildToolPlugin {
         let outputFileName = config.outputFile ?? "GeneratedJSONSchemaModels.swift"
         let outputURL = outputDirectory.appending(path: outputFileName)
 
-        let generator = try context.tool(named: "swift-jsonschema-generator")
+        let generator = try context.tool(named: "JSONSchemaToSwiftGenerator")
 
         return [
             .buildCommand(
