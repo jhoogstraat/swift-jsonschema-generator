@@ -65,9 +65,8 @@ public struct JSONSchemaToSwiftGenerator: Sendable {
     }
 
     public static func resolveSchemaURL(configurationSchema: String, relativeTo baseDirectory: String) -> URL {
-        let configuredURL = URL(fileURLWithPath: configurationSchema)
-        if configuredURL.path.hasPrefix("/") {
-            return configuredURL
+        if configurationSchema.hasPrefix("/") {
+            return URL(fileURLWithPath: configurationSchema)
         }
         return URL(fileURLWithPath: baseDirectory).appending(path: configurationSchema)
     }
