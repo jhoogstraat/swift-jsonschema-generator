@@ -437,7 +437,7 @@ let configData = try Data(contentsOf: URL(fileURLWithPath: configPath))
 let configuration = try JSONDecoder().decode(GeneratorConfiguration.self, from: configData)
 
 let schemaURL: URL
-if URL(fileURLWithPath: configuration.schema).path.hasPrefix("/") {
+if configuration.schema.hasPrefix("/") {
     schemaURL = URL(fileURLWithPath: configuration.schema)
 } else {
     schemaURL = URL(fileURLWithPath: targetDirectory).appending(path: configuration.schema)

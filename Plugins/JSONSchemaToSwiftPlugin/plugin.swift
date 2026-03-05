@@ -21,7 +21,7 @@ struct JSONSchemaToSwiftPlugin: BuildToolPlugin {
         let config = try JSONDecoder().decode(PluginConfiguration.self, from: data)
 
         let schemaURL: URL
-        if URL(fileURLWithPath: config.schema).path.hasPrefix("/") {
+        if config.schema.hasPrefix("/") {
             schemaURL = URL(fileURLWithPath: config.schema)
         } else {
             schemaURL = targetDirectory.appending(path: config.schema)
