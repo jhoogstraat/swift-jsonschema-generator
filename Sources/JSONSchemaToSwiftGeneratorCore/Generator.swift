@@ -173,14 +173,6 @@ private struct GenerationContext {
                 propertiesObject: schema["properties"] as? [String: Any] ?? [:],
                 required: Set((schema["required"] as? [String]) ?? [])
             )
-            if schemaAllowsNull(schema) {
-                let payloadName = "\(swiftName)Payload"
-                return [
-                    renderStruct(name: payloadName, properties: properties, accessLevel: accessLevel),
-                    "\(accessLevel) typealias \(swiftName) = \(payloadName)?"
-                ]
-            }
-
             return [renderStruct(name: swiftName, properties: properties, accessLevel: accessLevel)]
         }
 
@@ -254,7 +246,9 @@ private struct GenerationContext {
         if let ref = schema["$ref"] as? String,
            let definition = definitionName(fromRef: ref),
            let swiftName = generatedDefinitionNames[definition] {
-            return SwiftTypeInfo(baseType: swiftName, allowsNull: allowsNull)
+            let referencedSchema = definitions[definition] as? [String: Any]
+            let referencedAllowsNull = referencedSchema.map(schemaAllowsNull) ?? false
+            return SwiftTypeInfo(baseType: swiftName, allowsNull: allowsNull || referencedAllowsNull)
         }
 
         switch primaryNonNullType(in: schema) {

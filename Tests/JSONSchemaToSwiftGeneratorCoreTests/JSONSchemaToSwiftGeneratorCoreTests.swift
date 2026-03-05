@@ -110,8 +110,8 @@ struct JSONSchemaToSwiftGeneratorCoreTests {
         )
 
         #expect(output.contains("public let user: JSONSchemaUser?"))
-        #expect(output.contains("public struct JSONSchemaUserPayload: Codable, Hashable, Sendable {"))
-        #expect(output.contains("public typealias JSONSchemaUser = JSONSchemaUserPayload?"))
+        #expect(output.contains("public struct JSONSchemaUser: Codable, Hashable, Sendable {"))
+        #expect(!output.contains("JSONSchemaUserPayload"))
     }
 
     private func render(_ schema: String) throws -> String {
