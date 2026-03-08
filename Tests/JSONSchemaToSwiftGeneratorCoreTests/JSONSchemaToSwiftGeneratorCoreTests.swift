@@ -114,6 +114,180 @@ struct JSONSchemaToSwiftGeneratorCoreTests {
         #expect(!output.contains("JSONSchemaUserPayload"))
     }
 
+    @Test
+    func oneOfPropertiesGenerateNarrowedCompositeAccessors() throws {
+        let output = try render(
+            """
+            {
+              "type": "object",
+              "properties": {
+                "payload": {
+                  "oneOf": [
+                    { "$ref": "#/definitions/cat" },
+                    { "$ref": "#/definitions/dog" }
+                  ]
+                }
+              },
+              "definitions": {
+                "cat": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" }
+                  },
+                  "required": ["name"]
+                },
+                "dog": {
+                  "type": "object",
+                  "properties": {
+                    "barks": { "type": "boolean" }
+                  },
+                  "required": ["barks"]
+                }
+              }
+            }
+            """
+        )
+
+        #expect(output.contains("public let payload: JSONSchemaValue?"))
+        #expect(output.contains("public enum JSONSchemaDocumentPayloadComposite: Hashable, Sendable {"))
+        #expect(output.contains("case cat(JSONSchemaCat)"))
+        #expect(output.contains("case dog(JSONSchemaDog)"))
+        #expect(output.contains("public var payloadTyped: JSONSchemaDocumentPayloadComposite?"))
+    }
+
+    @Test
+    func anyOfPropertiesDecodeTypedMembersInSchemaOrder() throws {
+        let output = try render(
+            """
+            {
+              "type": "object",
+              "properties": {
+                "payload": {
+                  "anyOf": [
+                    { "type": "number" },
+                    { "type": "integer" }
+                  ]
+                }
+              }
+            }
+            """
+        )
+
+        let doubleDecode = "value.decodedCompositeValue(as: Double.self)"
+        let intDecode = "value.decodedCompositeValue(as: Int.self)"
+
+        #expect(output.contains("public enum JSONSchemaDocumentPayloadComposite: Hashable, Sendable {"))
+        #expect(output.contains("case number(Double)"))
+        #expect(output.contains("case integer(Int)"))
+        #expect(output.range(of: doubleDecode)?.lowerBound ?? output.endIndex < output.range(of: intDecode)?.lowerBound ?? output.startIndex)
+    }
+
+    @Test
+    func allOfPropertiesGenerateMergedCompositeHelpers() throws {
+        let output = try render(
+            """
+            {
+              "type": "object",
+              "properties": {
+                "payload": {
+                  "allOf": [
+                    { "$ref": "#/definitions/base" },
+                    { "$ref": "#/definitions/details" }
+                  ]
+                }
+              },
+              "definitions": {
+                "base": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" }
+                  },
+                  "required": ["id"]
+                },
+                "details": {
+                  "type": "object",
+                  "properties": {
+                    "count": { "type": "integer" }
+                  },
+                  "required": ["count"]
+                }
+              }
+            }
+            """
+        )
+
+        #expect(output.contains("public let payload: JSONSchemaValue?"))
+        #expect(output.contains("public struct JSONSchemaDocumentPayloadComposite: Hashable, Sendable {"))
+        #expect(output.contains("public let base: JSONSchemaBase"))
+        #expect(output.contains("public let details: JSONSchemaDetails"))
+        #expect(output.contains("public static func from(_ value: JSONSchemaValue) -> Self?"))
+        #expect(output.contains("public var payloadTyped: JSONSchemaDocumentPayloadComposite?"))
+    }
+
+    @Test
+    func compositeInlineObjectMembersGenerateNamedSwiftTypes() throws {
+        let output = try render(
+            """
+            {
+              "type": "object",
+              "properties": {
+                "payload": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" }
+                      },
+                      "required": ["name"]
+                    },
+                    { "type": "string" }
+                  ]
+                }
+              }
+            }
+            """
+        )
+
+        #expect(output.contains("public struct JSONSchemaDocumentPayloadCompositeObject1: Codable, Hashable, Sendable {"))
+        #expect(output.contains("case object1(JSONSchemaDocumentPayloadCompositeObject1)"))
+        #expect(output.contains("case string(String)"))
+    }
+
+    @Test
+    func compositeRootsGenerateRawAliasAndValueExtensions() throws {
+        let output = try render(
+            """
+            {
+              "oneOf": [
+                { "$ref": "#/definitions/cat" },
+                { "$ref": "#/definitions/dog" }
+              ],
+              "definitions": {
+                "cat": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" }
+                  },
+                  "required": ["name"]
+                },
+                "dog": {
+                  "type": "object",
+                  "properties": {
+                    "barks": { "type": "boolean" }
+                  },
+                  "required": ["barks"]
+                }
+              }
+            }
+            """
+        )
+
+        #expect(output.contains("public typealias JSONSchemaDocument = JSONSchemaValue"))
+        #expect(output.contains("public enum JSONSchemaDocumentComposite: Hashable, Sendable {"))
+        #expect(output.contains("public extension JSONSchemaValue {"))
+        #expect(output.contains("var asJSONSchemaDocumentComposite: JSONSchemaDocumentComposite?"))
+    }
+
     private func render(_ schema: String) throws -> String {
         try generator.generateOutput(
             schemaData: Data(schema.utf8),
